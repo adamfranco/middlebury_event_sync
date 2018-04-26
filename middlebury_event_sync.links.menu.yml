@@ -1,0 +1,5 @@
+middlebury_event_sync.admin_settings:
+  title: 'Event Sync'
+  description: 'Configure settings and calendar sources for the Event Sync module.'
+  route_name: middlebury_event_sync.admin_settings
+  parent: 'system.admin_config_services'

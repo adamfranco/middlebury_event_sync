@@ -1,0 +1,363 @@
+<?php
+
+/**
+ * @file
+ * The Middlebury Event Sync module.
+ */
+
+use Drupal\middlebury_event_sync\EventSourceInterface;
+use Drupal\middlebury_event_sync\EventInterface;
+use Drupal\node\Entity\Node;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\Component\Datetime\DateTimePlus;
+
+/**
+ * @file
+ * Support for syncronizing events from R25.
+ */
+
+/**
+ * Implements hook_cron().
+ */
+function middlebury_event_sync_cron() {
+  // Skip cron syncs if not enabled.
+  if (!\Drupal::config('middlebury_event_sync.settings')->get('enabled', FALSE)) {
+    return;
+  }
+
+  // This implementation doesn't use a queue. An alternative would be to use
+  // a queue to prevent slow updates from resulting in collisions:
+  // https://api.drupal.org/api/drupal/core!core.api.php/function/hook_cron/8.2.x
+  $query = \Drupal::entityQuery('event_source');
+  $sources = entity_load_multiple('event_source', $query->execute());
+  foreach ($sources as $source) {
+    // Compare the last-sync timestamp to the TTL. Should we sync now or wait?
+    $sync_key = 'middlebury_event_sync.last_sync.' . $source->id();
+    $last_sync = \Drupal::state()->get($sync_key);
+    if ($last_sync) {
+      $now = new \DateTime();
+      $ttl = new \DateInterval('PT' . $source->getTtl() . 'S');
+      $expiration = clone $last_sync;
+      $expiration = $expiration->add($ttl);
+      if ($expiration > $now) {
+        continue;
+      }
+    }
+
+    // If this source needs updating, sync it.
+    middlebury_event_sync_sync_source($source);
+
+    // Record our sync time.
+    \Drupal::state()->set($sync_key, new \DateTime());
+  }
+}
+
+/**
+ * Sync all events from all sources.
+ */
+function middlebury_event_sync_sync_all() {
+  $query = \Drupal::entityQuery('event_source');
+  $sources = entity_load_multiple('event_source', $query->execute());
+  $messages = [];
+  foreach ($sources as $source) {
+    $messages = array_merge($messages, middlebury_event_sync_sync_source($source));
+  }
+  return $messages;
+}
+
+/**
+ * Sync all events from a single source.
+ *
+ * @param \Drupal\middlebury_event_sync\EventSourceInterface $source
+ *   The configuration of an Event Source.
+ */
+function middlebury_event_sync_sync_source(EventSourceInterface $source) {
+  $plugin_manager = \Drupal::service('plugin.manager.event_source');
+  $plugin = $plugin_manager->createInstance($source->get('type'));
+  $num = 0;
+  $num_changed = 0;
+  $num_deleted = 0;
+  $messages = [];
+  $events_in_feed = $plugin->getEvents($source);
+  $oldest_start_time = NULL;
+  // Fix the event times if required.
+  foreach ($events_in_feed as $event) {
+    if ($source->getTimeShift() > 0) {
+      $offset = new \DateInterval('PT' . $source->getTimeShift() . 'H');
+      $event->getStartDateTime()->add($offset);
+      if ($event->hasEndDateTime()) {
+        $event->getEndDateTime()->add($offset);
+      }
+    }
+    elseif ($source->getTimeShift() < 0) {
+      $offset = new \DateInterval('PT' . abs($source->getTimeShift()) . 'H');
+      $event->getStartDateTime()->sub($offset);
+      if ($event->hasEndDateTime()) {
+        $event->getEndDateTime()->sub($offset);
+      }
+    }
+
+    // Find our first start time.
+    if (is_null($oldest_start_time) || $event->getStartDateTime() < $oldest_start_time) {
+      $oldest_start_time = $event->getStartDateTime();
+    }
+  }
+
+  // Check future events from this source to ensure that they are still in the
+  // feed and delete them if not. Don't do a delete if we have an empty feed as
+  // that could be caused by a system error in the calendar.
+  if ($oldest_start_time) {
+    $now = DateTimePlus::createFromDatetime(new \DateTime('now', new \DateTimeZone('UTC')))
+      ->setTimezone(new \DateTimeZone("UTC"));
+    $query = \Drupal::entityQuery('node')
+      ->condition('type', 'event')
+      ->condition('field_event_source', $source->id())
+      ->condition('field_start_date', $now->format(DATETIME_DATETIME_STORAGE_FORMAT), '>=')
+      ->condition('field_start_date', $oldest_start_time->format(DATETIME_DATETIME_STORAGE_FORMAT), '>=');
+    $nids = $query->execute();
+    $num_still_exist = 0;
+    if (!empty($nids)) {
+      $upcoming_nodes = entity_load_multiple('node', $nids);
+      foreach ($upcoming_nodes as $node) {
+        $still_exists = FALSE;
+        foreach ($events_in_feed as $event) {
+          if ($event->getId() == $node->field_external_id->value) {
+            $still_exists = TRUE;
+            $num_still_exist++;
+            break;
+          }
+        }
+        if (!$still_exists) {
+          $messages[] = t('Event @id, @external_id, %title on @date is no longer in the feed. Deleting.', [
+            '@id' => $node->nid->value,
+            '@external_id' => $node->field_external_id->value,
+            '%title' => $node->title->value,
+            '@date' => $node->field_start_date->value,
+          ]);
+          $storage_handler = \Drupal::entityTypeManager()->getStorage('node');
+          $storage_handler->delete([$node]);
+          $num_deleted++;
+        }
+      }
+    }
+  }
+
+  // Add/update events.
+  foreach ($events_in_feed as $event) {
+    $event_messages = middlebury_event_sync_create_or_update_event($event);
+    $messages = array_merge($messages, $event_messages);
+    $num++;
+    if (count($event_messages)) {
+      $num_changed++;
+    }
+  }
+
+  $messages[] = t('Synced @num events from @source, @changed were changed, @deleted upcoming events were no longer in the feed and were deleted.', [
+    '@num' => $num,
+    '@source' => $source->label(),
+    '@changed' => $num_changed,
+    '@deleted' => $num_deleted,
+  ]);
+  \Drupal::logger('middlebury_event_sync')->info('Synced @num events from @source, @changed were changed, @deleted were deleted.', [
+    '@num' => $num,
+    '@source' => $source->label(),
+    '@changed' => $num_changed,
+    '@deleted' => $num_deleted,
+  ]);
+  return $messages;
+}
+
+/**
+ * Create or update an event.
+ *
+ * @param \Drupal\middlebury_event_sync\EventInterface $event
+ *   The Event data.
+ */
+function middlebury_event_sync_create_or_update_event(EventInterface $event) {
+  $messages = [];
+  $changed_fields = [];
+
+  $query = \Drupal::entityQuery('node')
+    ->condition('type', 'event')
+    ->condition('field_external_id', $event->getId());
+  $nids = $query->execute();
+  // Create a new node if none exist.
+  if (empty($nids)) {
+    $nodes = [
+      $node = Node::create([
+        'type'                => 'event',
+        'field_external_id'   => $event->getId(),
+        'field_event_source'  => $event->getSource()->id(),
+      ]),
+    ];
+  }
+  // While this module should only create a single event node for each event id,
+  // a site-editor could conceivably duplicate a node.
+  else {
+    $nodes = entity_load_multiple('node', $nids);
+  }
+
+  // Set our values.
+  foreach ($nodes as $node) {
+    if ($node->title->value != $event->getTitle()) {
+      $changed_fields[] = t('title');
+    }
+    $node->title = $event->getTitle();
+
+    // Start date/time.
+    $time = $event->getStartDateTime()
+      ->setTimezone(new \DateTimeZone("UTC"))
+      ->format(DATETIME_DATETIME_STORAGE_FORMAT);
+    if ($node->field_start_date->value != $time) {
+      $changed_fields[] = t('start date/time');
+    }
+    $node->field_start_date->value = $time;
+
+    // End date/time.
+    if ($event->hasEndDateTime()) {
+      $time = $event->getEndDateTime()
+        ->setTimezone(new \DateTimeZone("UTC"))
+        ->format(DATETIME_DATETIME_STORAGE_FORMAT);
+      if ($node->field_end_date->value != $time) {
+        $changed_fields[] = t('end date/time');
+      }
+      $node->field_end_date->value = $time;
+    }
+
+    // Body.
+    if ($event->hasBody()) {
+      if ($node->field_body->value != $event->getBody()) {
+        $changed_fields[] = t('body');
+      }
+      $node->field_body->value = $event->getBody();
+      $node->field_body->format = 'simple_html';
+    }
+
+    // Blurb.
+    if ($event->hasBlurb()) {
+      if ($node->field_blurb->value != $event->getBlurb()) {
+        $changed_fields[] = t('blurb');
+      }
+      $node->field_blurb->value = $event->getBlurb();
+      $node->field_blurb->format = 'blurb_html';
+    }
+    // Use a truncated body if no Blurb is available.
+    elseif ($event->hasBody()) {
+      if ($node->field_blurb->value != text_summary($event->getBody())) {
+        $changed_fields[] = t('blurb');
+      }
+      $node->field_blurb->value = text_summary($event->getBody());
+      $node->field_blurb->format = 'blurb_html';
+    }
+
+    // Open to the Public.
+    if ($event->hasOpenToThePublic()) {
+      if ($node->field_public_event->value != $event->isOpenToThePublic()) {
+        $changed_fields[] = t('open-to-the-public');
+      }
+      $node->field_public_event = $event->isOpenToThePublic();
+    }
+
+    // Location.
+    if ($event->hasLocationId()) {
+      $locations = $node->field_location->getValue();
+      if (empty($locations) || $locations[0]['target_id'] != $event->getLocationId()) {
+        $changed_fields[] = t('location');
+      }
+      $node->field_location = $event->getLocationId();
+    }
+
+    // Admisison Price.
+    if ($event->hasAdmissionPrice()) {
+      if ($node->field_admission_price->value != $event->getAdmissionPrice()) {
+        $changed_fields[] = t('admission price');
+      }
+      $node->field_admission_price = $event->getAdmissionPrice();
+    }
+
+    // Contact info.
+    if ($event->hasOrganizerName()) {
+      if ($node->field_name->value != $event->getOrganizerName()) {
+        $changed_fields[] = t('organizer name');
+      }
+      $node->field_name = $event->getOrganizerName();
+    }
+    if ($event->hasOrganizerTelephone()) {
+      if ($node->field_telephone->value != $event->getOrganizerTelephone()) {
+        $changed_fields[] = t('organizer telephone');
+      }
+      $node->field_telephone = $event->getOrganizerTelephone();
+    }
+    if ($event->hasOrganizerEmail()) {
+      if ($node->field_email->value != $event->getOrganizerEmail()) {
+        $changed_fields[] = t('organizer email');
+      }
+      $node->field_email = $event->getOrganizerEmail();
+    }
+
+    // Featured photo URL.
+    if ($event->hasFeaturedPhotoUrl()) {
+      if (empty($event->getFeaturedPhotoUrl())) {
+        $node->field_feature_photo = NULL;
+      }
+      else {
+        // Check for an updated timestamp compared to our local photo.
+        // If the source is newer, add it to our event.
+        throw new \Exception('Featured-Photo timestamp lookup & download/saving is not yet implemented.');
+      }
+    }
+
+    // Event types.
+    if ($event->hasEventTypes()) {
+      $node_terms = [];
+      foreach ($event->getEventTypes() as $type_name) {
+        // Lookup existing term id.
+        $query = \Drupal::entityQuery('taxonomy_term')
+          ->condition('vid', 'event_types')
+          ->condition('name', $type_name);
+        $tids = $query->execute();
+        // Use the matching id.
+        if (!empty($tids)) {
+          $type_id = key($tids);
+        }
+        // Create a new event type term.
+        else {
+          $term = Term::create([
+            'name' => $type_name,
+            'vid' => 'event_types',
+          ]);
+          $term->save();
+          $type_id = $term->id();
+          $messages[] = t('Created new event type, %type.', ['%type' => $type_name]);
+        }
+        $node_terms[] = $type_id;
+      }
+      $types = $node->field_event_type->getValue();
+      $type_ids = [];
+      foreach ($types as $type) {
+        $type_ids[] = $type['target_id'];
+      }
+      if (array_diff($type_ids, $node_terms) !== array_diff($node_terms, $type_ids)) {
+        $changed_fields[] = t('event-type');
+      }
+      $node->field_event_type = $node_terms;
+    }
+
+    if (count($changed_fields)) {
+      if ($node->nid) {
+        $action = t('Updated');
+      }
+      else {
+        $action = t('Created');
+      }
+      $messages[] = t('@Action %title. Changed: @fields', [
+        '@Action' => $action,
+        '%title' => $event->getTitle(),
+        '@fields' => implode(', ', $changed_fields),
+      ]);
+      $node->save();
+    }
+  }
+
+  return $messages;
+}

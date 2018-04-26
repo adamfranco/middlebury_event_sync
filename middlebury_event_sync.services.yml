@@ -1,0 +1,9 @@
+services:
+  plugin.manager.event_source:
+    class: Drupal\middlebury_event_sync\EventSourcePluginManager
+    parent: default_plugin_manager
+  middlebury_event_sync.locations_to_yaml:
+    class: Drupal\middlebury_event_sync\Command\LocationsToYamlCommand
+    arguments: []
+    tags:
+      - { name: drupal.command }

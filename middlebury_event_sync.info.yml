@@ -1,0 +1,7 @@
+name: 'Event Sync'
+description: 'Syncronize event listings with R25.'
+core: 8.x
+dependencies:
+  - drupal:field
+package: Middlebury
+type: module

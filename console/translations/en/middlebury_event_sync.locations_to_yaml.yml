@@ -1,0 +1,14 @@
+description: 'Convert a location export from R25 into a YAML taxonomy file that can be imported using the yaml_content module.'
+options: {}
+arguments:
+  target: 'The path of the .yml file to update.'
+  r25_location_xml: 'The path of the Excel export from R25 containing location data.'
+  create_target: '%s does not exist. Create it?'
+messages:
+  success: 'Done.'
+errors:
+  not_writable: 'The specified target YAML path %s is not writable.'
+  is_directory: 'The specified target YAML path %s exists, but is a directory. Please specify a file name.'
+  does_not_exist: '%s does not exist.'
+  heading_not_found: 'Heading "%s" was not found in the sheet.'
+  abort: 'Aborting.'

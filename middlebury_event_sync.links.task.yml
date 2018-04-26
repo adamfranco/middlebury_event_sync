@@ -1,0 +1,17 @@
+middlebury_event_sync.admin_settings:
+  title: 'Settings'
+  description: 'Configure settings and calendar sources for the Event Sync module.'
+  route_name: middlebury_event_sync.admin_settings
+  base_route: middlebury_event_sync.admin_settings
+
+entity.event_source.collection:
+  title: 'Event Sources'
+  description: 'Configure calendar sources for the Event Sync module.'
+  route_name: entity.event_source.collection
+  base_route: middlebury_event_sync.admin_settings
+
+middlebury_event_sync.manual_sync:
+  title: 'Manual Sync'
+  description: 'Manually run the Event sync.'
+  route_name: middlebury_event_sync.manual_sync
+  base_route: middlebury_event_sync.admin_settings

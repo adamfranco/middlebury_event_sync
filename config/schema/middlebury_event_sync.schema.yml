@@ -1,0 +1,31 @@
+# Schema for the configuration files of the Event Sync module.
+middlebury_event_sync.settings:
+  type: config_object
+  label: 'Event Sync settings'
+  mapping:
+    enabled:
+      type: boolean
+      label: 'Sync Enabled:'
+
+middlebury_event_sync.event_source.*:
+  type: config_entity
+  label: 'Event Source config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    type:
+      type: string
+      label: 'The type of this source (e.g. "R25_RSS")'
+    uri:
+      type: uri
+      label: 'The URI to source the data from.'
+    ttl:
+      type: number
+      label: 'TTL (min seconds between fetches)'
+    time_shift:
+      type: number
+      label: 'The number of hours to shift the event time in the feed due to incorrect timezones in the source.'

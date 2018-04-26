@@ -1,0 +1,47 @@
+middlebury_event_sync.admin_settings:
+  path: '/admin/config/services/event_sync'
+  defaults:
+    _form: 'Drupal\middlebury_event_sync\Form\MiddleburyEventSyncSettingsForm'
+    _title: 'Event Sync'
+  requirements:
+    _permission: 'administer site configuration'
+
+middlebury_event_sync.manual_sync:
+  path: '/admin/config/services/event_sync/manual'
+  defaults:
+    _form: 'Drupal\middlebury_event_sync\Form\ManualSync'
+    _title: 'Manual Event Sync'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.event_source.collection:
+  path: '/admin/config/services/event_sync/sources'
+  defaults:
+    _entity_list: 'event_source'
+    _title: 'Event Sources'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.event_source.add_form:
+  path: '/admin/config/services/event_sync/sources/add'
+  defaults:
+    _entity_form: 'event_source.add'
+    _title: 'Add an Event Source'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.event_source.edit_form:
+  path: '/admin/config/services/event_sync/sources/{event_source}'
+  defaults:
+    _entity_form: 'event_source.edit'
+    _title: 'Edit Event Source'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.event_source.delete_form:
+  path: '/admin/config/services/event_sync/sources/{event_source}/delete'
+  defaults:
+    _entity_form: 'event_source.delete'
+    _title: 'Delete Event Source'
+  requirements:
+    _permission: 'administer site configuration'
