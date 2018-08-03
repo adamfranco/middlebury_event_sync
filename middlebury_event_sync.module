@@ -183,13 +183,13 @@ function middlebury_event_sync_create_or_update_event(EventInterface $event) {
   $nids = $query->execute();
   // Create a new node if none exist.
   if (empty($nids)) {
-    $nodes = [
-      $node = Node::create([
-        'type'                => 'event',
-        'field_external_id'   => $event->getId(),
-        'field_event_source'  => $event->getSource()->id(),
-      ]),
-    ];
+    $node = Node::create([
+      'type'                => 'event',
+      'field_external_id'   => $event->getId(),
+      'field_event_source'  => $event->getSource()->id(),
+      'moderation_state'    => 'published',
+    ]);
+    $nodes = [$node];
   }
   // While this module should only create a single event node for each event id,
   // a site-editor could conceivably duplicate a node.
