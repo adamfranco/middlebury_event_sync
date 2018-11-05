@@ -5,6 +5,7 @@ namespace Drupal\middlebury_event_sync\Form;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\middlebury_event_sync\EventSourcePluginManager;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -12,14 +13,20 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class EventSourceForm extends EntityForm {
 
+  protected $entityQuery;
+  protected $eventSourcePluginManager;
+
   /**
    * Constructs an EventSourceForm object.
    *
    * @param \Drupal\Core\Entity\Query\QueryFactory $entity_query
    *   The entity query.
+   * @param \Drupal\middlebury_event_sync\EventSourcePluginManager $plugin_manager
+   *   Our event source plugin manager.
    */
-  public function __construct(QueryFactory $entity_query) {
+  public function __construct(QueryFactory $entity_query, EventSourcePluginManager $plugin_manager) {
     $this->entityQuery = $entity_query;
+    $this->eventSourcePluginManager = $plugin_manager;
   }
 
   /**
@@ -27,7 +34,8 @@ class EventSourceForm extends EntityForm {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity.query')
+      $container->get('entity.query'),
+      $container->get('plugin.manager.event_source')
     );
   }
 
@@ -58,13 +66,14 @@ class EventSourceForm extends EntityForm {
     $form['type'] = [
       '#type' => 'select',
       '#title' => $this->t('Type'),
-      '#options' => [
-        'r25rss' => $this->t('R25 RSS'),
-      ],
+      '#options' => [],
       '#default_value' => $event_source->getType(),
       '#description' => $this->t("The type of the data."),
       '#required' => TRUE,
     ];
+    foreach ($this->eventSourcePluginManager->getDefinitions() as $pluginId => $pluginDefinition) {
+      $form['type']['#options'][$pluginId] = $pluginDefinition['label'];
+    }
     $form['uri'] = [
       '#type' => 'textfield',
       '#title' => $this->t('URI'),
