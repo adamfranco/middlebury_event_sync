@@ -3,7 +3,9 @@
 namespace Drupal\middlebury_event_sync\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;
+use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
 use Drupal\middlebury_event_sync\EventSourceInterface;
+use Drupal\middlebury_event_sync\EventSourcePluginCollection;
 
 /**
  * Defines the EventSource entity.
@@ -14,12 +16,19 @@ use Drupal\middlebury_event_sync\EventSourceInterface;
  *   handlers = {
  *     "list_builder" = "Drupal\middlebury_event_sync\Controller\EventSourceListBuilder",
  *     "form" = {
- *       "add" = "Drupal\middlebury_event_sync\Form\EventSourceForm",
+ *       "default" = "Drupal\middlebury_event_sync\Form\EventSourceForm",
  *       "edit" = "Drupal\middlebury_event_sync\Form\EventSourceForm",
  *       "delete" = "Drupal\middlebury_event_sync\Form\EventSourceDeleteForm",
  *     }
  *   },
  *   config_prefix = "event_source",
+ *   config_export = {
+ *     "id",
+ *     "label",
+ *     "provider",
+ *     "plugin",
+ *     "settings",
+*   },
  *   admin_permission = "administer site configuration",
  *   entity_keys = {
  *     "id" = "id",
@@ -31,7 +40,7 @@ use Drupal\middlebury_event_sync\EventSourceInterface;
  *   }
  * )
  */
-class EventSource extends ConfigEntityBase implements EventSourceInterface {
+class EventSource extends ConfigEntityBase implements EventSourceInterface, EntityWithPluginCollectionInterface  {
 
   /**
    * The Event Source ID.
@@ -48,87 +57,67 @@ class EventSource extends ConfigEntityBase implements EventSourceInterface {
   public $label;
 
   /**
-   * The Event Source type.
+   * The plugin instance settings.
+   *
+   * @var array
+   */
+  protected $settings = [];
+
+  /**
+   * The plugin collection that holds the event_source plugin for this entity.
+   *
+   * @var \Drupal\middlebury_event_sync\EventSourcePluginCollection
+   */
+  protected $pluginCollection;
+
+  /**
+   * The plugin instance ID.
    *
    * @var string
    */
-  protected $type;
+  protected $plugin;
 
   /**
-   * The Event Source URI.
+   * {@inheritdoc}
+   */
+  public function getPlugin() {
+    return $this
+      ->getPluginCollection()
+      ->get($this->plugin);
+  }
+
+  /**
+   * Encapsulates the creation of the event-source's LazyPluginCollection.
    *
-   * @var string
+   * @return \Drupal\Component\Plugin\LazyPluginCollection
+   *   The event-source's plugin collection.
    */
-  protected $uri;
-
-  /**
-   * The Event Source TTL.
-   *
-   * @var int
-   */
-  protected $ttl = 3600;
-
-  /**
-   * The Event Source time-shift in hours.
-   *
-   * @var int
-   */
-  protected $time_shift = 0;
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setType($type) {
-    $this->type = $type;
+  protected function getPluginCollection() {
+    if (!$this->pluginCollection) {
+      $this->pluginCollection = new EventSourcePluginCollection(
+        \Drupal::service('plugin.manager.event_source'),
+        $this->plugin,
+        $this->get('settings'), $this->id()
+      );
+    }
+    return $this->pluginCollection;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getType() {
-    return $this->type;
+  public function getPluginCollections() {
+    return [
+      'settings' => $this->getPluginCollection(),
+    ];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function setUri($uri) {
-    $this->uri = $uri;
+  public function getPluginId() {
+    return $this->plugin;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getUri() {
-    return $this->uri;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setTtl($ttl) {
-    $this->ttl = intval($ttl);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getTtl() {
-    return $this->ttl;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setTimeShift($time_shift) {
-    $this->time_shift = intval($time_shift);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getTimeShift() {
-    return $this->time_shift;
-  }
 
 }

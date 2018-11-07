@@ -1,5 +1,0 @@
-entity.event_source.add_form:
-  route_name: 'entity.event_source.add_form'
-  title: 'Add Event Source'
-  appears_on:
-    - entity.event_source.collection

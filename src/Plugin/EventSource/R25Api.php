@@ -5,19 +5,20 @@ namespace Drupal\middlebury_event_sync\Plugin\EventSource;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\taxonomy\Entity\Term;
-use Drupal\middlebury_event_sync\EventSourcePluginInterface;
 use Drupal\middlebury_event_sync\EventBase;
+use Drupal\middlebury_event_sync\EventSourceInterface;
+use Drupal\middlebury_event_sync\EventSourcePluginInterface;
 use Drupal\middlebury_event_sync\Plugin\EventSourceBase;
 
 /**
- * Plugin definition for the "R25Rss" plugin.
+ * Plugin definition for the "R25Api" plugin.
  *
  * @EventSource(
- *   id = "r25rss",
- *   label = @Translation("R25 RSS"),
+ *   id = "r25api",
+ *   label = @Translation("R25 API"),
  * )
  */
-class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
+class R25Api extends EventSourceBase implements EventSourcePluginInterface {
 
   /**
    * The URI to fetch events from.
@@ -27,7 +28,21 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
   protected $uri;
 
   /**
-   * Set our instance value for URI.
+   * The username to use when fetching events.
+   *
+   * @var string
+   */
+  protected $username;
+
+  /**
+   * The password to use when fetching events.
+   *
+   * @var string
+   */
+  protected $password;
+
+  /**
+   * The URI to use when fetching events.
    *
    * @param string $uri
    *   The URI to fetch from.
@@ -52,12 +67,68 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
   }
 
   /**
+   * The username to use when fetching events.
+   *
+   * @param string $username
+   *   The URI to fetch from.
+   */
+  public function setUsername($username) {
+    $this->username = $username;
+  }
+
+  /**
+   * Answer the username to use when fetching events.
+   *
+   * @return string
+   *   The username.
+   */
+  public function getUsername() {
+    if (empty($this->username)) {
+      return '';
+    }
+    else {
+      return $this->username;
+    }
+  }
+
+  /**
+   * The password to use when fetching events.
+   *
+   * @param string $password
+   *   The URI to fetch from.
+   */
+  public function setPassword($password) {
+    $this->password = $password;
+  }
+
+  /**
+   * Answer the password to use when fetching events.
+   *
+   * @return string
+   *   The password.
+   */
+  public function getPassword() {
+    if (empty($this->password)) {
+      return '';
+    }
+    else {
+      return $this->password;
+    }
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function setConfiguration(array $configuration) {
     parent::setConfiguration($configuration);
     if (isset($configuration['uri'])) {
       $this->setUri($configuration['uri']);
+    }
+    if (isset($configuration['username'])) {
+      $this->setUsername($configuration['username']);
+    }
+    if (isset($configuration['password'])) {
+      $this->setPassword($configuration['password']);
     }
     return $this;
   }
@@ -68,6 +139,8 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
   public function getConfiguration() {
     $configuration = parent::getConfiguration();
     $configuration['uri'] = $this->getUri();
+    $configuration['username'] = $this->getUsername();
+    $configuration['password'] = $this->getPassword();
     return $configuration;
   }
 
@@ -102,8 +175,24 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
       '#title' => $this->t('URI'),
       '#maxlength' => 255,
       '#default_value' => $this->getUri(),
-      '#description' => $this->t("The URI to source the data from."),
+      '#description' => $this->t("The base-URI of the 25Live web-service. Example: https://webservices.collegenet.com/r25ws/wrd/middlebury/run"),
       '#required' => TRUE,
+    ];
+    $form['username'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Username'),
+      '#maxlength' => 80,
+      '#default_value' => $this->getUsername(),
+      '#description' => $this->t("The username to use when fetching data."),
+      '#required' => FALSE,
+    ];
+    $form['password'] = [
+      '#type' => 'password',
+      '#title' => $this->t('Password'),
+      '#maxlength' => 80,
+      '#default_value' => $this->getPassword(),
+      '#description' => $this->t("The password to use when fetching data."),
+      '#required' => FALSE,
     ];
     return $form;
   }
@@ -140,6 +229,8 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     parent::validateConfigurationForm($form, $form_state);
     $this->setUri($form_state->getValue('uri'));
+    $this->setUsername($form_state->getValue('username'));
+    $this->setPassword($form_state->getValue('password'));
   }
 
   /**
@@ -173,34 +264,7 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
    *   An array of \Drupal\middlebury_event_sync\EventInterface events.
    */
   protected function getEventsByDate(DrupalDateTime $start = NULL) {
-    $client = \Drupal::httpClient();
-    $uri = $this->getUri();
-    if ($start) {
-      $param = 'startdate=' . $start->format('Ymd');
-      if (preg_match('/.+\?.+/', $uri)) {
-        $uri .= '&' . $param;
-      }
-      else {
-        $uri .= '?' . $param;
-      }
-    }
-    try {
-      $response = $client->get($uri);
-      // Expected result.
-      // getBody() returns an instance of Psr\Http\Message\StreamInterface.
-      // @see http://docs.guzzlephp.org/en/latest/psr7.html#body
-      $data = simplexml_load_string($response->getBody()->getContents());
-      $events = [];
-      foreach ($data->channel->item as $item) {
-        $event = $this->extract($item);
-        $event->setSource($source);
-        $events[$event->getId()] = $event;
-      }
-      return $events;
-    }
-    catch (RequestException $e) {
-      watchdog_exception('middlebury_event_sync', $e);
-    }
+    throw new \Exception('Not yet implemented');
   }
 
   /**
@@ -232,106 +296,7 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
    *   The Event
    */
   protected function extract(\SimpleXMLElement $item) {
-    $item_xcal = $item->children('urn:ietf:params:xml:ns:xcal');
-    $item->registerXPathNamespace('x-trumba', 'http://schemas.trumba.com/rss/x-trumba');
-
-    $event = new EventBase();
-    $event->setId($item->guid->__toString());
-
-    // Title.
-    $event->setTitle($item->title->__toString());
-
-    // Date/Time.
-    $start = new \DateTime($item_xcal->dtstart->__toString());
-    $event->setStartDateTime(new DrupalDateTime($start->format('Y-m-d\TH:i:s'), $start->format('e')));
-    $end = new \DateTime($item_xcal->dtend->__toString());
-    $event->setEndDateTime(new DrupalDateTime($end->format('Y-m-d\TH:i:s'), $end->format('e')));
-
-    // Body.
-    $body = $item_xcal->description->__toString();
-    // Ensure that the body contains paragraphs.
-    $body = '<p>' . implode('</p><p>', array_filter(explode("\n", $body))) . '</p>';
-    $event->setBody($body);
-    // No separate blurb is available.
-    // Open-to-the-Public.
-    $elements = $item->xpath("x-trumba:customfield[@id='623']");
-    foreach ($elements as $element) {
-      if (preg_match('/Open to the public/i', $element->__toString())) {
-        $event->setOpenToThePublic(TRUE);
-      }
-      elseif (preg_match('/Closed to the public/i', $element->__toString())) {
-        $event->setOpenToThePublic(FALSE);
-      }
-    }
-
-    // Location.
-    $location_string = $item_xcal->location->__toString();
-    if (!empty($location_string)) {
-      $query = \Drupal::entityQuery('taxonomy_term')
-        ->condition('vid', 'locations')
-        ->condition('name', $location_string);
-      $tids = $query->execute();
-      if (!empty($tids)) {
-        $event->setLocationId(current($tids));
-      }
-      // Create a new Location term.
-      else {
-        $term = Term::create([
-          'name' => $location_string,
-          'vid' => 'locations',
-        ]);
-        $term->save();
-        $event->setLocationId($term->id());
-        \Drupal::logger('middlebury_event_sync')->notice('Created new location, %name.', ['%name' => $location_string]);
-      }
-    }
-
-    // Admission Price.
-    $elements = $item->xpath("x-trumba:customfield[@id='625']");
-    foreach ($elements as $element) {
-      $event->setOpenToThePublic($element->__toString());
-    }
-
-    // Contact -- used by MIIS.
-    $elements = $item->xpath("x-trumba:customfield[@id='4407']");
-    foreach ($elements as $element) {
-      $event->setOrganizerName($element->__toString());
-    }
-
-    // Submitter Name -- used by Midd.
-    $elements = $item->xpath("x-trumba:customfield[@id='884']");
-    foreach ($elements as $element) {
-      $event->setOrganizerName($element->__toString());
-    }
-
-    // Submitter Phone.
-    $elements = $item->xpath("x-trumba:customfield[@id='885']");
-    foreach ($elements as $element) {
-      $event->setOrganizerTelephone($element->__toString());
-    }
-
-    // Submitter Email.
-    $elements = $item->xpath("x-trumba:customfield[@id='886']");
-    foreach ($elements as $element) {
-      $event->setOrganizerEmail($element->__toString());
-    }
-
-    // Event types.
-    $elements = $item->xpath("x-trumba:customfield[@id='12']");
-    $event_types = [];
-    foreach ($elements as $element) {
-      $type = $element->__toString();
-      // Strip off a '*' prefix.
-      $type = preg_replace('/^\*/', '', $type);
-      // Strip off a 'MIIS--' prefix.
-      $type = preg_replace('/^MIIS\s*-+\s*/', '', $type);
-      // Decode any HTML entities.
-      $type = html_entity_decode($type);
-      $event_types[] = $type;
-    }
-    $event->setEventTypes($event_types);
-
-    return $event;
+    throw new \Exception('Not yet implemented');
   }
 
 }

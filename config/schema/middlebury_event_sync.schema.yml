@@ -17,15 +17,11 @@ middlebury_event_sync.event_source.*:
     label:
       type: label
       label: 'Label'
-    type:
+    provider:
       type: string
-      label: 'The type of this source (e.g. "R25_RSS")'
-    uri:
-      type: uri
-      label: 'The URI to source the data from.'
-    ttl:
-      type: number
-      label: 'TTL (min seconds between fetches)'
-    time_shift:
-      type: number
-      label: 'The number of hours to shift the event time in the feed due to incorrect timezones in the source.'
+      label: 'Provider'
+    plugin:
+      type: string
+      label: 'Plugin'
+    settings:
+      type: middlebury_event_sync.event_source_plugin.[%parent.plugin]

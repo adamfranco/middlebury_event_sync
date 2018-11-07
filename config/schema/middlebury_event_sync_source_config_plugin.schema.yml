@@ -1,0 +1,38 @@
+middlebury_event_sync.event_source_plugin.base:
+  type: config_entity
+  label: 'Event Source plugin configuration'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    provider:
+      type: string
+      label: 'Provider'
+    time_shift:
+      type: number
+      label: 'Time Shift - The number of hours to shift the event time in the feed due to incorrect timezones in the source.'
+    ttl:
+      type: number
+      label: 'TTL (min seconds between fetches).'
+
+middlebury_event_sync.event_source_plugin.r25rss:
+  type: middlebury_event_sync.event_source_plugin.base
+  label: 'R25 RSS Event Source configuration'
+  mapping:
+    uri:
+      type: uri
+      label: 'The URI to source the data from.'
+
+middlebury_event_sync.event_source_plugin.r25api:
+  type: middlebury_event_sync.event_source_plugin.base
+  label: 'R25 API Event Source configuration'
+  mapping:
+    uri:
+      type: uri
+      label: 'The base URI for the 25Live web-services API.'
+    username:
+      type: string
+      label: 'The username to authenticate against the API with.'
+    password:
+      type: string
+      label: 'The password to authenticate against the API with.'

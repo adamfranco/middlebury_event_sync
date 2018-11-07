@@ -33,7 +33,7 @@ class EventSourcePluginManager extends DefaultPluginManager {
       'Drupal\middlebury_event_sync\EventSourcePluginInterface',
       'Drupal\middlebury_event_sync\Annotation\EventSource'
     );
-    $this->alterInfo('event_source_plugin_info');
+    $this->alterInfo('event_source_info');
     $this->setCacheBackend($cache_backend, 'event_source_plugins');
   }
 

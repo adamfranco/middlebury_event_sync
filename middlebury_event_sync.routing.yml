@@ -23,9 +23,9 @@ entity.event_source.collection:
     _permission: 'administer site configuration'
 
 entity.event_source.add_form:
-  path: '/admin/config/services/event_sync/sources/add'
+  path: '/admin/config/services/event_sync/sources/add/{plugin_id}'
   defaults:
-    _entity_form: 'event_source.add'
+    _controller: '\Drupal\middlebury_event_sync\Controller\EventSourceAddController::eventSourceAddConfigureForm'
     _title: 'Add an Event Source'
   requirements:
     _permission: 'administer site configuration'
