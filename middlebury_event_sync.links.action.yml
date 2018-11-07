@@ -1,0 +1,4 @@
+entity.event_source.add_form_links:
+  deriver: 'Drupal\middlebury_event_sync\Plugin\Derivative\AddLinks'
+  appears_on:
+    - entity.event_source.collection
