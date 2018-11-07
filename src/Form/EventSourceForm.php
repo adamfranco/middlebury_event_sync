@@ -2,6 +2,7 @@
 
 namespace Drupal\middlebury_event_sync\Form;
 
+use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Entity\Query\QueryFactory;
 use Drupal\Core\Form\FormStateInterface;
@@ -32,12 +33,12 @@ class EventSourceForm extends EntityForm {
    *
    * @param \Drupal\Core\Entity\Query\QueryFactory $entity_query
    *   The entity query.
-   * @param \Drupal\middlebury_event_sync\EventSourcePluginManager $plugin_manager
+   * @param \Drupal\Component\Plugin\PluginManagerInterface $plugin_manager
    *   Our event source plugin manager.
    * @param \Drupal\Core\Plugin\PluginFormFactoryInterface $plugin_form_manager
    *   The plugin form manager.
    */
-  public function __construct(QueryFactory $entity_query, EventSourcePluginManager $plugin_manager, PluginFormFactoryInterface $plugin_form_manager) {
+  public function __construct(QueryFactory $entity_query, PluginManagerInterface $plugin_manager, PluginFormFactoryInterface $plugin_form_manager) {
     $this->entityQuery = $entity_query;
     $this->eventSourcePluginManager = $plugin_manager;
     $this->pluginFormFactory = $plugin_form_manager;
