@@ -28,7 +28,7 @@ use Drupal\middlebury_event_sync\EventSourcePluginCollection;
  *     "provider",
  *     "plugin",
  *     "settings",
-*   },
+ *   },
  *   admin_permission = "administer site configuration",
  *   entity_keys = {
  *     "id" = "id",
@@ -40,7 +40,7 @@ use Drupal\middlebury_event_sync\EventSourcePluginCollection;
  *   }
  * )
  */
-class EventSource extends ConfigEntityBase implements EventSourceInterface, EntityWithPluginCollectionInterface  {
+class EventSource extends ConfigEntityBase implements EventSourceInterface, EntityWithPluginCollectionInterface {
 
   /**
    * The Event Source ID.
@@ -118,6 +118,5 @@ class EventSource extends ConfigEntityBase implements EventSourceInterface, Enti
   public function getPluginId() {
     return $this->plugin;
   }
-
 
 }

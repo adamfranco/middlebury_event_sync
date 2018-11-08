@@ -4,7 +4,6 @@ namespace Drupal\middlebury_event_sync;
 
 use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Component\Plugin\ConfigurablePluginInterface;
-use Drupal\Component\Plugin\PluginFormInterface;
 
 /**
  * Defines an interface for (loading of) Event Source plugins.

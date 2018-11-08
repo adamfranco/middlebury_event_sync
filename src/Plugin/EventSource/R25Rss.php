@@ -71,7 +71,6 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
     return $configuration;
   }
 
-
   /**
    * Form constructor.
    *
@@ -193,7 +192,7 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
       $events = [];
       foreach ($data->channel->item as $item) {
         $event = $this->extract($item);
-        $event->setSource($source);
+        $event->setSource($this);
         $events[$event->getId()] = $event;
       }
       return $events;

@@ -5,7 +5,6 @@ namespace Drupal\middlebury_event_sync\Plugin;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginBase;
 use Drupal\middlebury_event_sync\EventSourcePluginInterface;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 
 /**
  * Base class for Event source plugins to handle persisting their configuration.
@@ -39,7 +38,7 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
    *
    * @var int
    */
-  protected $time_shift = 0;
+  protected $timeShift = 0;
 
   /**
    * {@inheritdoc}
@@ -118,14 +117,14 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
    * {@inheritdoc}
    */
   public function setTimeShift($time_shift) {
-    $this->time_shift = intval($time_shift);
+    $this->timeShift = intval($time_shift);
   }
 
   /**
    * {@inheritdoc}
    */
   public function getTimeShift() {
-    return $this->time_shift;
+    return $this->timeShift;
   }
 
   /**

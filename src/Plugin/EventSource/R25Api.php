@@ -4,9 +4,6 @@ namespace Drupal\middlebury_event_sync\Plugin\EventSource;
 
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\taxonomy\Entity\Term;
-use Drupal\middlebury_event_sync\EventBase;
-use Drupal\middlebury_event_sync\EventSourceInterface;
 use Drupal\middlebury_event_sync\EventSourcePluginInterface;
 use Drupal\middlebury_event_sync\Plugin\EventSourceBase;
 
@@ -143,7 +140,6 @@ class R25Api extends EventSourceBase implements EventSourcePluginInterface {
     $configuration['password'] = $this->getPassword();
     return $configuration;
   }
-
 
   /**
    * Form constructor.

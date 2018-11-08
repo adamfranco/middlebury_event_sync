@@ -38,15 +38,6 @@ class EventSourcePluginCollection extends DefaultSingleLazyPluginCollection {
 
   /**
    * {@inheritdoc}
-   *
-   * @return \Drupal\middlebury_event_sync\EventSourcePluginInterface
-   */
-  public function &get($instance_id) {
-    return parent::get($instance_id);
-  }
-
-  /**
-   * {@inheritdoc}
    */
   protected function initializePlugin($instance_id) {
     if (!$instance_id) {
@@ -58,8 +49,8 @@ class EventSourcePluginCollection extends DefaultSingleLazyPluginCollection {
     }
     catch (PluginException $e) {
       $module = $this->configuration['provider'];
-      // Ignore event-sources belonging to uninstalled modules, but re-throw valid
-      // exceptions when the module is installed and the plugin is
+      // Ignore event-sources belonging to uninstalled modules, but re-throw
+      // valid exceptions when the module is installed and the plugin is
       // misconfigured.
       if (!$module || \Drupal::moduleHandler()->moduleExists($module)) {
         throw $e;

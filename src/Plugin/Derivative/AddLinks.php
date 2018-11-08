@@ -1,11 +1,11 @@
 <?php
+
 namespace Drupal\middlebury_event_sync\Plugin\Derivative;
 
 use Drupal\Component\Plugin\Derivative\DeriverBase;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\Plugin\Discovery\ContainerDeriverInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-
 
 /**
  * Defines dynamic local tasks.

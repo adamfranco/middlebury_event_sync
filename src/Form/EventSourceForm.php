@@ -102,8 +102,9 @@ class EventSourceForm extends EntityForm {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    // The EventSource Entity form puts all event-source plugin form elements in the
-    // settings form element, so just pass that to the event-source plugin for validation.
+    // The EventSource Entity form puts all event-source plugin form elements in
+    // the settings form element, so just pass that to the event-source plugin
+    // for validation.
     $this->getPluginForm($this->entity->getPlugin())->validateConfigurationForm($form['settings'], SubformState::createForSubform($form['settings'], $form, $form_state));
   }
 
@@ -114,8 +115,9 @@ class EventSourceForm extends EntityForm {
     parent::submitForm($form, $form_state);
 
     $entity = $this->entity;
-    // The EventSource Entity form puts event-source block plugin form elements in the
-    // settings form element, so just pass that to the event-source for submission.
+    // The EventSource Entity form puts event-source block plugin form elements
+    // in the settings form element, so just pass that to the event-source for
+    // submission.
     $sub_form_state = SubformState::createForSubform($form['settings'], $form, $form_state);
     // Call the plugin submit handler.
     $block = $entity->getPlugin();
