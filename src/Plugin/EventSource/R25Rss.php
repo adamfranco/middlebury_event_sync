@@ -174,6 +174,7 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
   protected function getEventsByDate(DrupalDateTime $start = NULL) {
     $client = \Drupal::httpClient();
     $uri = $this->getUri();
+
     if ($start) {
       $param = 'startdate=' . $start->format('Ymd');
       if (preg_match('/.+\?.+/', $uri)) {
@@ -192,7 +193,7 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
       $events = [];
       foreach ($data->channel->item as $item) {
         $event = $this->extract($item);
-        $event->setSource($this);
+        $event->setSource($this->getConfigInstance());
         $events[$event->getId()] = $event;
       }
       return $events;

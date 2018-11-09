@@ -30,10 +30,9 @@ class EventSourcePluginCollection extends DefaultSingleLazyPluginCollection {
    * @param string $event_source_id
    *   The unique ID of the EventSource entity using this plugin.
    */
-  public function __construct(PluginManagerInterface $manager, $instance_id, array $configuration, $event_source_id) {
+  public function __construct(PluginManagerInterface $manager, $instance_id, array $configuration, $event_source) {
+    $this->eventSource = $event_source;
     parent::__construct($manager, $instance_id, $configuration);
-
-    $this->eventSourceId = $event_source_id;
   }
 
   /**
@@ -46,6 +45,10 @@ class EventSourcePluginCollection extends DefaultSingleLazyPluginCollection {
 
     try {
       parent::initializePlugin($instance_id);
+      $plugin_instance = $this->pluginInstances[$instance_id];
+      if ($plugin_instance instanceof EventSourcePluginInterface) {
+        $plugin_instance->setConfigInstance($this->eventSource);
+      }
     }
     catch (PluginException $e) {
       $module = $this->configuration['provider'];

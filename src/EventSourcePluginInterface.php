@@ -14,12 +14,20 @@ use Drupal\Component\Plugin\ConfigurablePluginInterface;
 interface EventSourcePluginInterface extends PluginInspectionInterface, ConfigurablePluginInterface {
 
   /**
-   * Sets the TTL of the Event Source.
+   * Sets the Event Source config instance for this plugin instance.
    *
-   * @param int $ttl
-   *   The min number of seconds between fetches.
+   * @param \Drupal\middlebury_event_sync\EventSourceInterface $config_instance
+   *   The config entity.
    */
-  public function setTtl($ttl);
+  public function setConfigInstance(EventSourceInterface $config_instance);
+
+  /**
+   * Answer the Event Source config instance for this plugin instance.
+   *
+   * @return \Drupal\middlebury_event_sync\EventSourceInterface
+   *   The config entity.
+   */
+  public function getConfigInstance();
 
   /**
    * Answers the TTL of the Event Source.
@@ -28,6 +36,14 @@ interface EventSourcePluginInterface extends PluginInspectionInterface, Configur
    *   The min number of seconds between fetches.
    */
   public function getTtl();
+
+  /**
+   * Sets the TTL of the Event Source.
+   *
+   * @param int $ttl
+   *   The min number of seconds between fetches.
+   */
+  public function setTtl($ttl);
 
   /**
    * Sets the Time-shift of the Event Source.

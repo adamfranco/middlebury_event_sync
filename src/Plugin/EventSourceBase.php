@@ -4,6 +4,7 @@ namespace Drupal\middlebury_event_sync\Plugin;
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\PluginBase;
+use Drupal\middlebury_event_sync\EventSourceInterface;
 use Drupal\middlebury_event_sync\EventSourcePluginInterface;
 
 /**
@@ -19,12 +20,18 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
   public $provider;
 
   /**
-   * The Event Source ID.
+   * The plugin ID.
    *
    * @var string
    */
   public $id;
 
+  /**
+   * The Event Source config instance.
+   *
+   * @var \Drupal\middlebury_event_sync\EventSourceInterface
+   */
+  protected $configInstance;
 
   /**
    * The Event Source TTL.
@@ -112,6 +119,20 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
    */
   public function getLabel() {
     return $this->pluginDefinition['label'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setConfigInstance(EventSourceInterface $config_instance) {
+    $this->configInstance = $config_instance;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfigInstance() {
+    return $this->configInstance;
   }
 
   /**

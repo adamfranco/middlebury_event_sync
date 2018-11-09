@@ -12,7 +12,7 @@ interface EventSourceInterface extends ConfigEntityInterface {
   /**
    * Returns the plugin instance.
    *
-   * @return \Drupal\Core\Block\BlockPluginInterface
+   * @return \Drupal\middlebury_event_sync\EventSourcePluginInterface
    *   The plugin instance for this block.
    */
   public function getPlugin();

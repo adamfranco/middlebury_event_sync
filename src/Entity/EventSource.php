@@ -97,7 +97,8 @@ class EventSource extends ConfigEntityBase implements EventSourceInterface, Enti
       $this->pluginCollection = new EventSourcePluginCollection(
         \Drupal::service('plugin.manager.event_source'),
         $this->plugin,
-        $this->get('settings'), $this->id()
+        $this->get('settings'),
+        $this
       );
     }
     return $this->pluginCollection;

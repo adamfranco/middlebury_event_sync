@@ -89,15 +89,15 @@ function middlebury_event_sync_sync_source(EventSourceInterface $source) {
   $oldest_start_time = NULL;
   // Fix the event times if required.
   foreach ($events_in_feed as $event) {
-    if ($source->getTimeShift() > 0) {
-      $offset = new \DateInterval('PT' . $source->getTimeShift() . 'H');
+    if ($plugin->getTimeShift() > 0) {
+      $offset = new \DateInterval('PT' . $plugin->getTimeShift() . 'H');
       $event->getStartDateTime()->add($offset);
       if ($event->hasEndDateTime()) {
         $event->getEndDateTime()->add($offset);
       }
     }
     elseif ($source->getTimeShift() < 0) {
-      $offset = new \DateInterval('PT' . abs($source->getTimeShift()) . 'H');
+      $offset = new \DateInterval('PT' . abs($plugin->getTimeShift()) . 'H');
       $event->getStartDateTime()->sub($offset);
       if ($event->hasEndDateTime()) {
         $event->getEndDateTime()->sub($offset);
