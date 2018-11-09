@@ -48,6 +48,22 @@ interface EventSourcePluginInterface extends PluginInspectionInterface, Configur
   public function getTimeShift();
 
   /**
+   * Sets whether or not this source should import events.
+   *
+   * @param boolean $enable
+   *   True if imports should be run.
+   */
+  public function setEnabled($enabled);
+
+  /**
+   * Answers true if this source is enabled for imports
+   *
+   * @return boolean
+   *   True if imports should be run.
+   */
+  public function getEnabled();
+
+  /**
    * Answer an array of Events found at the source.
    *
    * @return \Drupal\middlebury_event_sync\Event[]

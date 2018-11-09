@@ -72,8 +72,15 @@ function middlebury_event_sync_sync_all() {
  *   The configuration of an Event Source.
  */
 function middlebury_event_sync_sync_source(EventSourceInterface $source) {
-  $plugin_manager = \Drupal::service('plugin.manager.event_source');
-  $plugin = $plugin_manager->createInstance($source->get('type'));
+  $plugin = $source->getPlugin();
+
+  if (!$plugin->getEnabled()) {
+    $messages[] = t('EventSource @source is disabled. Skipping.', [
+      '@source' => $source->label(),
+    ]);
+    return $messages;
+  }
+
   $num = 0;
   $num_changed = 0;
   $num_deleted = 0;

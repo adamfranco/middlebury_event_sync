@@ -41,6 +41,17 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
   protected $timeShift = 0;
 
   /**
+   * Is this EventSource enabled for sync?
+   *
+   * It may be desired to keep an EventSource as a reference for old events,
+   * or to prepare a new one. In neither case would we want to currently import
+   * Events.
+   *
+   * @var boolean
+   */
+  protected $enabled = true;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
@@ -61,6 +72,9 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
     if (isset($configuration['time_shift'])) {
       $this->setTimeShift((int) $configuration['time_shift']);
     }
+    if (isset($configuration['enabled'])) {
+      $this->setEnabled((boolean) $configuration['enabled']);
+    }
     return $this;
   }
 
@@ -73,6 +87,7 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
       'provider' => $this->pluginDefinition['provider'],
       'ttl' => $this->getTtl(),
       'time_shift' => $this->getTimeShift(),
+      'enabled' => $this->getEnabled(),
     ];
   }
 
@@ -128,6 +143,20 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function setEnabled($enabled) {
+    $this->enabled = boolval($enabled);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getEnabled() {
+    return $this->enabled;
+  }
+
+  /**
    * Form constructor.
    *
    * Plugin forms are embedded in other forms. In order to know where the plugin
@@ -164,6 +193,12 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
       '#default_value' => $this->getTimeShift(),
       '#description' => $this->t("The number of hours to shift the event time in the feed due to incorrect timezones in the source."),
       '#required' => TRUE,
+    ];
+    $form['enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enabled'),
+      '#default_value' => $this->getEnabled(),
+      '#description' => $this->t("Should this event source import events when cron runs?."),
     ];
     return $form;
   }
@@ -205,6 +240,7 @@ abstract class EventSourceBase extends PluginBase implements EventSourcePluginIn
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $this->setTtl($form_state->getValue('ttl'));
     $this->setTimeShift($form_state->getValue('time_shift'));
+    $this->setEnabled($form_state->getValue('enabled'));
   }
 
   /**

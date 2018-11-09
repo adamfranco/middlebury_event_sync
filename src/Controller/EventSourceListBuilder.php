@@ -19,6 +19,7 @@ class EventSourceListBuilder extends ConfigEntityListBuilder {
     $header['type'] = $this->t('Type');
     $header['ttl'] = $this->t('TTL');
     $header['time_shift'] = $this->t('Time-Shift');
+    $header['enabled'] = $this->t('Enabled');
     return $header + parent::buildHeader();
   }
 
@@ -35,6 +36,7 @@ class EventSourceListBuilder extends ConfigEntityListBuilder {
 
     $row['ttl'] = $plugin->getTtl();
     $row['time_shift'] = $this->t('@shift hours', ['@shift' => $plugin->getTimeShift()]);
+    $row['enabled'] = $plugin->getEnabled()?$this->t('Enabled'):$this->t('Disabled');
 
     return $row + parent::buildRow($entity);
   }
