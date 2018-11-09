@@ -137,7 +137,7 @@ class R25Rss extends EventSourceBase implements EventSourcePluginInterface {
    *   \Drupal\Core\Form\SubformState::createForSubform().
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
-    parent::validateConfigurationForm($form, $form_state);
+    parent::submitConfigurationForm($form, $form_state);
     $this->setUri($form_state->getValue('uri'));
   }
 
